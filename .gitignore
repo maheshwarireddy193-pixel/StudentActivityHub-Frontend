@@ -26,3 +26,11 @@ dist-ssr
 .env
 .env.*
 !.env.example
+# Local database configuration and secrets
+src/main/resources/application.properties
+
+# Uploaded certificates and user files
+uploads/
+
+# Spring Boot build output
+target/

@@ -17,6 +17,7 @@ import {
   UploadCloud,
   X,
 } from "lucide-react";
+import { API_BASE_URL } from "../../services/api";
 import "../../App.css";
 
 const initialForm = {
@@ -134,7 +135,7 @@ export default function SubmitActivity() {
       data.append("certificate", certificate);
 
       const response = await fetch(
-        "http://localhost:8082/api/activities/upload",
+        `${API_BASE_URL}/activities/upload`,
         {
           method: "POST",
           headers: {
@@ -167,7 +168,7 @@ export default function SubmitActivity() {
 
       if (err instanceof TypeError) {
         setError(
-          "Cannot connect to the backend. Check that Spring Boot is running on port 8082 and CORS is configured."
+          "Cannot connect to the backend. Check that the backend server is running and CORS is configured."
         );
       } else {
         setError(
