@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import html2pdf from "html2pdf.js";
 import {
   ArrowLeft,
   Download,
@@ -16,7 +15,6 @@ import {
 } from "lucide-react";
 import "./ResumeBuilder.css";
 
-// Initial resume data
 const initialForm = {
   name: "",
   email: "",
@@ -31,52 +29,72 @@ const initialForm = {
   graduationYear: "",
   cgpa: "",
   skills: "",
-  projects: [
-    {
-      title: "",
-      technologies: "",
-      description: "",
-      link: "",
-    },
-  ],
-  internships: [
-    {
-      company: "",
-      role: "",
-      duration: "",
-      description: "",
-    },
-  ],
+  projects: [{ title: "", technologies: "", description: "", link: "" }],
+  internships: [{ company: "", role: "", duration: "", description: "" }],
   certifications: [""],
   achievements: "",
 };
 
-// Section heading component OUTSIDE ResumeBuilder
-function SectionTitle({ icon: Icon, children }) {
-  return (
+export default function ResumeBuilder() {
+  const [form, setForm] = useState(initialForm);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const updateField = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateArrayItem = (field, index, key, value) => {
+    setForm((prev) => ({
+      ...prev,
+      [field]: prev[field].map((item, i) =>
+        i === index
+          ? typeof item === "string"
+            ? value
+            : { ...item, [key]: value }
+          : item
+      ),
+    }));
+  };
+
+  const addItem = (field, emptyItem) => {
+    setForm((prev) => ({
+      ...prev,
+      [field]: [...prev[field], emptyItem],
+    }));
+  };
+
+  const removeItem = (field, index) => {
+    setForm((prev) => ({
+      ...prev,
+      [field]: prev[field].filter((_, i) => i !== index),
+    }));
+  };
+
+  const downloadPDF = () => {
+  window.print();
+  
+};
+
+  const SectionTitle = ({ icon: Icon, children }) => (
     <h3 className="rb-section-title">
       <Icon size={19} />
       {children}
     </h3>
   );
-}
 
-// Input component OUTSIDE ResumeBuilder
-function Field({
-  label,
-  value,
-  onChange,
-  placeholder,
-  type = "text",
-  required = false,
-}) {
-  return (
+  const Field = ({
+    label,
+    value,
+    onChange,
+    placeholder,
+    type = "text",
+    required = false,
+  }) => (
     <label className="rb-field">
       <span>
         {label}
         {required && <b className="rb-required"> *</b>}
       </span>
-
       <input
         type={type}
         value={value}
@@ -86,110 +104,9 @@ function Field({
       />
     </label>
   );
-}
-
-export default function ResumeBuilder() {
-  const [form, setForm] = useState(initialForm);
-  const [showPreview, setShowPreview] = useState(false);
-  const [downloading, setDownloading] = useState(false);
-
-  // Update a normal field
-  const updateField = (field, value) => {
-    setForm((previous) => ({
-      ...previous,
-      [field]: value,
-    }));
-  };
-
-  // Update an item inside an array
-  const updateArrayItem = (field, index, key, value) => {
-    setForm((previous) => ({
-      ...previous,
-      [field]: previous[field].map((item, itemIndex) => {
-        if (itemIndex !== index) return item;
-
-        if (typeof item === "string") {
-          return value;
-        }
-
-        return {
-          ...item,
-          [key]: value,
-        };
-      }),
-    }));
-  };
-
-  // Add an item
-  const addItem = (field, emptyItem) => {
-    setForm((previous) => ({
-      ...previous,
-      [field]: [...previous[field], emptyItem],
-    }));
-  };
-
-  // Remove an item
-  const removeItem = (field, index) => {
-    setForm((previous) => ({
-      ...previous,
-      [field]: previous[field].filter(
-        (_, itemIndex) => itemIndex !== index
-      ),
-    }));
-  };
-
-  // Download resume directly as PDF
-  const downloadPDF = async () => {
-    const resume = document.getElementById("rb-resume-document");
-
-    if (!resume) {
-      alert("Resume preview not found. Please refresh the page.");
-      return;
-    }
-
-    if (!form.name.trim()) {
-      alert("Please enter your full name before downloading.");
-      return;
-    }
-
-    setDownloading(true);
-
-    try {
-      const options = {
-        margin: [10, 10, 10, 10],
-        filename: `${form.name.trim().replace(/[^a-z0-9]/gi, "_")}_Resume.pdf`,
-        image: {
-          type: "jpeg",
-          quality: 0.98,
-        },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: "#ffffff",
-          scrollY: 0,
-        },
-        jsPDF: {
-          unit: "mm",
-          format: "a4",
-          orientation: "portrait",
-        },
-        pagebreak: {
-          mode: ["css", "legacy"],
-        },
-      };
-
-      await html2pdf().set(options).from(resume).save();
-    } catch (error) {
-      console.error("PDF download failed:", error);
-      alert("Unable to download the resume. Please try again.");
-    } finally {
-      setDownloading(false);
-    }
-  };
 
   return (
     <div className="rb-page">
-      {/* Header */}
       <header className="rb-header">
         <Link to="/dashboard" className="rb-back">
           <ArrowLeft size={18} />
@@ -201,30 +118,20 @@ export default function ResumeBuilder() {
           <span>Resume Builder</span>
         </div>
 
-        <button
-          type="button"
-          className="rb-download"
-          onClick={downloadPDF}
-          disabled={downloading}
-        >
+        <button className="rb-download" onClick={downloadPDF}>
           <Download size={17} />
-          {downloading ? "Preparing PDF..." : "Download PDF"}
+          Download PDF
         </button>
       </header>
 
       <main className="rb-main">
-        {/* Page heading */}
         <div className="rb-heading">
           <div>
-            <span className="rb-eyebrow">
-              YOUR CAREER STARTS HERE
-            </span>
-
+            <span className="rb-eyebrow">YOUR CAREER STARTS HERE</span>
             <h1>Build your professional resume.</h1>
-
             <p>
-              Add your education, skills, projects and achievements
-              to create a resume you can share with recruiters.
+              Add your education, skills, projects and achievements to create
+              a resume you can share with recruiters.
             </p>
           </div>
 
@@ -234,30 +141,23 @@ export default function ResumeBuilder() {
         </div>
 
         <div className="rb-layout">
-          {/* Resume form */}
           <section className="rb-form-panel">
             <div className="rb-panel-heading">
               <div>
                 <h2>Resume details</h2>
                 <p>Fill in the sections below.</p>
               </div>
-
-              <span className="rb-live-badge">
-                LIVE EDITOR
-              </span>
+              <span className="rb-live-badge">LIVE EDITOR</span>
             </div>
 
-            <form onSubmit={(event) => event.preventDefault()}>
-              {/* Personal details */}
-              <SectionTitle icon={User}>
-                Personal information
-              </SectionTitle>
+            <form onSubmit={(e) => e.preventDefault()}>
+              <SectionTitle icon={User}>Personal information</SectionTitle>
 
               <div className="rb-grid">
                 <Field
                   label="Full name"
                   value={form.name}
-                  onChange={(value) => updateField("name", value)}
+                  onChange={(v) => updateField("name", v)}
                   placeholder="Your full name"
                   required
                 />
@@ -266,7 +166,7 @@ export default function ResumeBuilder() {
                   label="Email address"
                   type="email"
                   value={form.email}
-                  onChange={(value) => updateField("email", value)}
+                  onChange={(v) => updateField("email", v)}
                   placeholder="you@example.com"
                   required
                 />
@@ -274,71 +174,59 @@ export default function ResumeBuilder() {
                 <Field
                   label="Phone number"
                   value={form.phone}
-                  onChange={(value) => updateField("phone", value)}
+                  onChange={(v) => updateField("phone", v)}
                   placeholder="+91 XXXXX XXXXX"
                 />
 
                 <Field
                   label="Location"
                   value={form.location}
-                  onChange={(value) => updateField("location", value)}
+                  onChange={(v) => updateField("location", v)}
                   placeholder="City, State"
                 />
 
                 <Field
                   label="LinkedIn profile"
                   value={form.linkedin}
-                  onChange={(value) => updateField("linkedin", value)}
+                  onChange={(v) => updateField("linkedin", v)}
                   placeholder="https://linkedin.com/in/..."
                 />
 
                 <Field
                   label="GitHub profile"
                   value={form.github}
-                  onChange={(value) => updateField("github", value)}
+                  onChange={(v) => updateField("github", v)}
                   placeholder="https://github.com/..."
                 />
               </div>
 
-              {/* Objective */}
-              <SectionTitle icon={FileText}>
-                Career objective
-              </SectionTitle>
+              <SectionTitle icon={FileText}>Career objective</SectionTitle>
 
               <label className="rb-field">
                 <span>Professional summary</span>
-
                 <textarea
                   rows="4"
                   value={form.objective}
-                  onChange={(event) =>
-                    updateField("objective", event.target.value)
-                  }
+                  onChange={(e) => updateField("objective", e.target.value)}
                   placeholder="Write a short summary about your career goals, strengths and interests..."
                 />
               </label>
 
-              {/* Education */}
-              <SectionTitle icon={GraduationCap}>
-                Education
-              </SectionTitle>
+              <SectionTitle icon={GraduationCap}>Education</SectionTitle>
 
               <div className="rb-grid">
                 <Field
                   label="College / University"
                   value={form.college}
-                  onChange={(value) => updateField("college", value)}
+                  onChange={(v) => updateField("college", v)}
                   placeholder="College name"
                 />
 
                 <label className="rb-field">
                   <span>Degree</span>
-
                   <select
                     value={form.degree}
-                    onChange={(event) =>
-                      updateField("degree", event.target.value)
-                    }
+                    onChange={(e) => updateField("degree", e.target.value)}
                   >
                     <option>B.Tech</option>
                     <option>B.E.</option>
@@ -353,48 +241,38 @@ export default function ResumeBuilder() {
                 <Field
                   label="Branch / Specialization"
                   value={form.branch}
-                  onChange={(value) => updateField("branch", value)}
+                  onChange={(v) => updateField("branch", v)}
                   placeholder="e.g. AI & ML"
                 />
 
                 <Field
                   label="Graduation year"
                   value={form.graduationYear}
-                  onChange={(value) =>
-                    updateField("graduationYear", value)
-                  }
+                  onChange={(v) => updateField("graduationYear", v)}
                   placeholder="e.g. 2028"
                 />
 
                 <Field
                   label="CGPA / Percentage"
                   value={form.cgpa}
-                  onChange={(value) => updateField("cgpa", value)}
+                  onChange={(v) => updateField("cgpa", v)}
                   placeholder="e.g. 8.5 CGPA"
                 />
               </div>
 
-              {/* Skills */}
-              <SectionTitle icon={Code}>
-                Technical skills
-              </SectionTitle>
+              <SectionTitle icon={Code}>Technical skills</SectionTitle>
 
               <label className="rb-field">
                 <span>Skills</span>
-
                 <textarea
                   rows="3"
                   value={form.skills}
-                  onChange={(event) =>
-                    updateField("skills", event.target.value)
-                  }
+                  onChange={(e) => updateField("skills", e.target.value)}
                   placeholder="Java, Python, React, Spring Boot, MySQL..."
                 />
-
                 <small>Separate skills using commas.</small>
               </label>
 
-              {/* Projects */}
               <SectionTitle icon={BriefcaseBusiness}>
                 Projects
               </SectionTitle>
@@ -403,7 +281,6 @@ export default function ResumeBuilder() {
                 <div className="rb-item-card" key={index}>
                   <div className="rb-item-top">
                     <b>Project {index + 1}</b>
-
                     {form.projects.length > 1 && (
                       <button
                         type="button"
@@ -419,8 +296,8 @@ export default function ResumeBuilder() {
                   <Field
                     label="Project title"
                     value={project.title}
-                    onChange={(value) =>
-                      updateArrayItem("projects", index, "title", value)
+                    onChange={(v) =>
+                      updateArrayItem("projects", index, "title", v)
                     }
                     placeholder="Project name"
                   />
@@ -428,13 +305,8 @@ export default function ResumeBuilder() {
                   <Field
                     label="Technologies"
                     value={project.technologies}
-                    onChange={(value) =>
-                      updateArrayItem(
-                        "projects",
-                        index,
-                        "technologies",
-                        value
-                      )
+                    onChange={(v) =>
+                      updateArrayItem("projects", index, "technologies", v)
                     }
                     placeholder="React, Java, MySQL..."
                   />
@@ -442,24 +314,23 @@ export default function ResumeBuilder() {
                   <Field
                     label="GitHub repository / Project link"
                     value={project.link}
-                    onChange={(value) =>
-                      updateArrayItem("projects", index, "link", value)
+                    onChange={(v) =>
+                      updateArrayItem("projects", index, "link", v)
                     }
                     placeholder="https://github.com/..."
                   />
 
                   <label className="rb-field">
                     <span>Project description</span>
-
                     <textarea
                       rows="3"
                       value={project.description}
-                      onChange={(event) =>
+                      onChange={(e) =>
                         updateArrayItem(
                           "projects",
                           index,
                           "description",
-                          event.target.value
+                          e.target.value
                         )
                       }
                       placeholder="Explain what the project does and what you contributed..."
@@ -480,11 +351,9 @@ export default function ResumeBuilder() {
                   })
                 }
               >
-                <Plus size={17} />
-                Add another project
+                <Plus size={17} /> Add another project
               </button>
 
-              {/* Internships */}
               <SectionTitle icon={BriefcaseBusiness}>
                 Internships / Experience
               </SectionTitle>
@@ -493,14 +362,11 @@ export default function ResumeBuilder() {
                 <div className="rb-item-card" key={index}>
                   <div className="rb-item-top">
                     <b>Experience {index + 1}</b>
-
                     {form.internships.length > 1 && (
                       <button
                         type="button"
                         className="rb-remove"
-                        onClick={() =>
-                          removeItem("internships", index)
-                        }
+                        onClick={() => removeItem("internships", index)}
                         aria-label="Remove experience"
                       >
                         <Trash2 size={16} />
@@ -512,13 +378,8 @@ export default function ResumeBuilder() {
                     <Field
                       label="Organization"
                       value={internship.company}
-                      onChange={(value) =>
-                        updateArrayItem(
-                          "internships",
-                          index,
-                          "company",
-                          value
-                        )
+                      onChange={(v) =>
+                        updateArrayItem("internships", index, "company", v)
                       }
                       placeholder="Company name"
                     />
@@ -526,13 +387,8 @@ export default function ResumeBuilder() {
                     <Field
                       label="Role"
                       value={internship.role}
-                      onChange={(value) =>
-                        updateArrayItem(
-                          "internships",
-                          index,
-                          "role",
-                          value
-                        )
+                      onChange={(v) =>
+                        updateArrayItem("internships", index, "role", v)
                       }
                       placeholder="Intern / Developer..."
                     />
@@ -540,13 +396,8 @@ export default function ResumeBuilder() {
                     <Field
                       label="Duration"
                       value={internship.duration}
-                      onChange={(value) =>
-                        updateArrayItem(
-                          "internships",
-                          index,
-                          "duration",
-                          value
-                        )
+                      onChange={(v) =>
+                        updateArrayItem("internships", index, "duration", v)
                       }
                       placeholder="e.g. May–June 2026"
                     />
@@ -554,16 +405,15 @@ export default function ResumeBuilder() {
 
                   <label className="rb-field">
                     <span>Responsibilities / Learning</span>
-
                     <textarea
                       rows="3"
                       value={internship.description}
-                      onChange={(event) =>
+                      onChange={(e) =>
                         updateArrayItem(
                           "internships",
                           index,
                           "description",
-                          event.target.value
+                          e.target.value
                         )
                       }
                       placeholder="Describe your experience and contributions..."
@@ -584,38 +434,31 @@ export default function ResumeBuilder() {
                   })
                 }
               >
-                <Plus size={17} />
-                Add experience
+                <Plus size={17} /> Add experience
               </button>
 
-              {/* Certifications */}
-              <SectionTitle icon={Award}>
-                Certifications
-              </SectionTitle>
+              <SectionTitle icon={Award}>Certifications</SectionTitle>
 
               {form.certifications.map((certificate, index) => (
                 <div className="rb-inline-item" key={index}>
                   <input
                     value={certificate}
-                    onChange={(event) =>
+                    onChange={(e) =>
                       updateArrayItem(
                         "certifications",
                         index,
                         null,
-                        event.target.value
+                        e.target.value
                       )
                     }
                     placeholder="Certification name"
-                    aria-label={`Certification ${index + 1}`}
                   />
 
                   {form.certifications.length > 1 && (
                     <button
                       type="button"
                       className="rb-remove"
-                      onClick={() =>
-                        removeItem("certifications", index)
-                      }
+                      onClick={() => removeItem("certifications", index)}
                       aria-label="Remove certification"
                     >
                       <Trash2 size={16} />
@@ -629,36 +472,26 @@ export default function ResumeBuilder() {
                 className="rb-add"
                 onClick={() => addItem("certifications", "")}
               >
-                <Plus size={17} />
-                Add certification
+                <Plus size={17} /> Add certification
               </button>
 
-              {/* Achievements */}
-              <SectionTitle icon={Award}>
-                Achievements
-              </SectionTitle>
+              <SectionTitle icon={Award}>Achievements</SectionTitle>
 
               <label className="rb-field">
                 <span>Achievements and awards</span>
-
                 <textarea
                   rows="3"
                   value={form.achievements}
-                  onChange={(event) =>
-                    updateField("achievements", event.target.value)
-                  }
+                  onChange={(e) => updateField("achievements", e.target.value)}
                   placeholder="Hackathons, awards, leadership, competitions..."
                 />
               </label>
 
-              {/* Actions */}
               <div className="rb-form-actions">
                 <button
                   type="button"
                   className="rb-preview-button"
-                  onClick={() =>
-                    setShowPreview((previous) => !previous)
-                  }
+                  onClick={() => setShowPreview((prev) => !prev)}
                 >
                   <Eye size={17} />
                   {showPreview ? "Hide preview" : "Preview resume"}
@@ -668,27 +501,20 @@ export default function ResumeBuilder() {
                   type="button"
                   className="rb-download"
                   onClick={downloadPDF}
-                  disabled={downloading}
                 >
                   <Download size={17} />
-                  {downloading ? "Preparing PDF..." : "Download PDF"}
+                  Print / Save PDF
                 </button>
               </div>
             </form>
           </section>
 
-          {/* Resume preview */}
-          <aside
-            className={`rb-preview-panel ${
-              showPreview ? "rb-preview-open" : ""
-            }`}
-          >
+          <aside className={`rb-preview-panel ${showPreview ? "rb-preview-open" : ""}`}>
             <div className="rb-preview-heading">
               <div>
                 <span className="rb-eyebrow">LIVE PREVIEW</span>
                 <h2>Your resume</h2>
               </div>
-
               <Eye size={21} />
             </div>
 
@@ -700,7 +526,6 @@ export default function ResumeBuilder() {
   );
 }
 
-// Resume preview component OUTSIDE ResumeBuilder
 function ResumePreview({ form }) {
   const hasProjects = form.projects.some(
     (project) => project.title.trim() || project.description.trim()
@@ -710,9 +535,7 @@ function ResumePreview({ form }) {
     (item) => item.company.trim() || item.role.trim()
   );
 
-  const certifications = form.certifications.filter(
-    (item) => item.trim()
-  );
+  const certifications = form.certifications.filter((item) => item.trim());
 
   const skills = form.skills
     .split(",")
@@ -720,20 +543,16 @@ function ResumePreview({ form }) {
     .filter(Boolean);
 
   return (
-    <article className="rb-paper" id="rb-resume-document">
+    <article className="rb-paper">
       <div className="rb-resume-header">
         <h1>{form.name || "Your Name"}</h1>
 
         <div className="rb-contact-line">
-          {[form.email, form.phone, form.location]
-            .filter(Boolean)
-            .join(" | ")}
+          {[form.email, form.phone, form.location].filter(Boolean).join(" | ")}
         </div>
 
         <div className="rb-contact-line">
-          {[form.linkedin, form.github]
-            .filter(Boolean)
-            .join(" | ")}
+          {[form.linkedin, form.github].filter(Boolean).join(" | ")}
         </div>
       </div>
 
@@ -744,26 +563,15 @@ function ResumePreview({ form }) {
         </section>
       )}
 
-      {(form.college ||
-        form.branch ||
-        form.graduationYear ||
-        form.cgpa) && (
+      {(form.college || form.branch || form.graduationYear || form.cgpa) && (
         <section className="rb-resume-section">
           <h3>EDUCATION</h3>
-
           <b>{form.college || "College / University"}</b>
-
           <p>
-            {[form.degree, form.branch]
-              .filter(Boolean)
-              .join(" — ")}
+            {[form.degree, form.branch].filter(Boolean).join(" — ")}
           </p>
-
           <p>
-            {[
-              form.graduationYear,
-              form.cgpa && `CGPA: ${form.cgpa}`,
-            ]
+            {[form.graduationYear, form.cgpa && `CGPA: ${form.cgpa}`]
               .filter(Boolean)
               .join(" | ")}
           </p>
@@ -782,30 +590,20 @@ function ResumePreview({ form }) {
           <h3>PROJECTS</h3>
 
           {form.projects
-            .filter(
-              (project) =>
-                project.title.trim() ||
-                project.description.trim()
-            )
+            .filter((project) => project.title.trim() || project.description.trim())
             .map((project, index) => (
               <div className="rb-resume-item" key={index}>
                 <b>{project.title || "Project"}</b>
 
                 {project.technologies && (
                   <p>
-                    <i>
-                      Technologies: {project.technologies}
-                    </i>
+                    <i>Technologies: {project.technologies}</i>
                   </p>
                 )}
 
-                {project.description && (
-                  <p>{project.description}</p>
-                )}
+                {project.description && <p>{project.description}</p>}
 
-                {project.link && (
-                  <p>Repository: {project.link}</p>
-                )}
+                {project.link && <p>Repository: {project.link}</p>}
               </div>
             ))}
         </section>
@@ -816,14 +614,10 @@ function ResumePreview({ form }) {
           <h3>EXPERIENCE</h3>
 
           {form.internships
-            .filter(
-              (item) =>
-                item.company.trim() || item.role.trim()
-            )
+            .filter((item) => item.company.trim() || item.role.trim())
             .map((item, index) => (
               <div className="rb-resume-item" key={index}>
                 <b>{item.role || "Role"}</b>
-
                 {item.company && <p>{item.company}</p>}
                 {item.duration && <p>{item.duration}</p>}
                 {item.description && <p>{item.description}</p>}
@@ -835,7 +629,6 @@ function ResumePreview({ form }) {
       {certifications.length > 0 && (
         <section className="rb-resume-section">
           <h3>CERTIFICATIONS</h3>
-
           <ul>
             {certifications.map((certificate, index) => (
               <li key={index}>{certificate}</li>
